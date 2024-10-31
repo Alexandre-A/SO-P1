@@ -31,8 +31,8 @@ function checkSubRegex() { #VER SE AQUI TMB METO A CONTAGEM DOS ERROS!
 function recursiveDeletion(){
     # $1 -> directory; $2 -> optc; $3 -> número de erros
     local dir="$1"
-    local optc="$3"
-    local erros="$2"   
+    local optc="$2"
+    local erros="$3"   
     if ! [ -n "$(find "$dir" -mindepth 1 -maxdepth 1 -print -quit)" ]; then #Se a diretoria estiver vazia
         cmd rmdir "$1" $optc
         if ! [[ $? -eq 0 ]];then #Se houve erro a copiar
@@ -47,7 +47,7 @@ function recursiveDeletion(){
                 erros=$((erros+1))
             fi
             elif [[ -d "$file" ]];then
-                recursiveDeletion "$file" $erros $optc
+                recursiveDeletion "$file" $optc $erros
                 erros=$?
             fi
         done
@@ -237,7 +237,7 @@ for file in "$BACKUPFOLDER"/*; do
     
     elif [[ -d "$file" ]]; then
         if  ! [[ -d "${WORKFOLDER}/${file##*/}" ]]; then
-            recursiveDeletion "$file" ${summaryArray[0]} $optc
+            recursiveDeletion "$file" $optc ${summaryArray[0]}
             errosDeletion=$?
             summaryArray[0]=$((summaryArray[0]+errosDeletion))
         fi

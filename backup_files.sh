@@ -1,18 +1,25 @@
 #!/bin/bash
 
 
-function cmd(){
-	[[ $2 -eq 0 ]] && echo $1 || (echo $1 && $1)
+function cmd() {
+    OIFS=$IFS
+    IFS=$'\n'
+   [[ "${@: -1}" -eq 0 ]] && echo "${@:1:$#-1}" || (echo ${@:1:$#-1} && ${@:1:$#-1})    
+    IFS=$OIFS
 }
 
+#----------------------Variable initiation--------------------------#
+shopt -s dotglob
 newFolder=1
 OPTSTRING=":c"
-opcao=1;   
+optc=1;  
+#-----------------------------------------------------------------------#
+
 while getopts ${OPTSTRING} opt; do
   case ${opt} in
     c)
       #echo "Option -c was triggered, Argument: ${OPTARG}"
-      opcao=0
+      optc=0
       ;;
     ?)
       echo "Invalid option: -${OPTARG}."
@@ -28,7 +35,7 @@ fi
 
 # echo ${!OPTIND} #indirect expansion
 
-if ! [ -d  ${!OPTIND} ]; then
+if ! [ -d  "${!OPTIND}" ]; then
 echo "Diretoria de trabalho não existe"
 exit 1;
 fi
@@ -43,38 +50,47 @@ if [[ "$WORKFOLDER" == "$BACKUPFOLDER" ]]; then
 	exit 1
 fi
 
-if ! [ -d  $BACKUPFOLDER ]; then
-if [ -f $BACKUPFOLDER ]; then
-	echo "Já existe um ficheiro com este nome, impossível criar a diretoria de backup"
-	exit 1
-else
-	mkdir "$BACKUPFOLDER"
-	newFolder=0
-fi
+
+if ! [ -d  "$BACKUPFOLDER" ]; then
+    if [ -f "$BACKUPFOLDER" ]; then
+        echo "» Impossível criar a diretoria de backup $BACKUPFOLDER, já existe um ficheiro com o mesmo nome «"
+            exit 1
+    else
+        cmd mkdir "$BACKUPFOLDER" $optc    
+        newFolder=0
+    fi
 
 fi
 
 WORKFOLDER=$(realpath "$WORKFOLDER")
-BACKUPFOLDER=$(realpath "$BACKUPFOLDER")
+if ! [[ $newFolder -eq 0 ]] ; then
+    BACKUPFOLDER=$(realpath "$BACKUPFOLDER")
+fi
 #echo "$BACKUPFOLDER"
 
 if [[ "$BACKUPFOLDER" == "$WORKFOLDER"* ]]; then
 
         echo "A diretoria escolhida como destino de backup está contida na diretoria de trabalho"
 	echo "Escolha uma diretoria diferente"
-	if [[ $newFolder -eq 0 ]]; then
-
-		rmdir "$BACKUPFOLDER"
-	fi
 	exit 1
 fi
 
 for file in "$WORKFOLDER"/*; do
 	if [[ -f $file ]]; then
 		if [[ "$file" -nt "${BACKUPFOLDER}/${file##*/}" ]]; then
-			cmd "cp -a $file ${BACKUPFOLDER}/${file##*/}" $opcao
+			cmd cp -a "$file" "${BACKUPFOLDER}/${file##*/}" $optc
 		elif [[ "${BACKUPFOLDER}/${file##*/}" -nt "$file" ]]; then
 			echo "WARNING: backup entry ${BACKUPFOLDER}/${file##*/} is newer than ${WORKFOLDER}/${file##*/}; Should not happen"
 		fi
 	fi
 done
+
+for file in "$BACKUPFOLDER"/*; do
+    if [[ -f "$file" ]];then
+    #echo "$file"
+   	if  ! [[ -f "${WORKFOLDER}/${file##*/}" ]]; then    
+            cmd rm "$file" $optc
+        fi
+    fi
+done
+

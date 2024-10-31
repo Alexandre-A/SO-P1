@@ -1,24 +1,70 @@
 #!/bin/bash
 
-function cmd(){
-	[[ $2 -eq 0 ]] && echo $1 || (echo $1 && $1)
+function cmd() {
+    OIFS=$IFS
+    IFS=$'\n'
+   [[ "${@: -1}" -eq 0 ]] && echo "${@:1:$#-1}" || (echo ${@:1:$#-1} && ${@:1:$#-1})    
+    IFS=$OIFS 
 }
 
+function checkSubRegex() { #VER SE AQUI TMB METO A CONTAGEM DOS ERROS!
+    for file in "$1"/* ; do
+        if [[ -d "$file" ]] ; then
+            checkSubRegex "$file" "$2" $3
+            if [[ $? -eq 0 ]] ; then
+                cmd mkdir -p"$2" $3
+                break
+            fi
+        else
+            if [[ "${file##*/}" =~ ^$REGEX$ ]];then
+                cmd mkdir -p "$2" $3
+                return 0
+            else
+                return 1
+            fi
+        fi
+    done
+}
+
+function recursiveDeletion(){
+    # $1 -> directory; $2 -> optc
+    local dir="$1"
+    local optc="$2"
+    if ! [ -n "$(find "$dir" -mindepth 1 -maxdepth 1 -print -quit)" ]; then #Se a diretoria estiver vazia
+        cmd rmdir "$1" $optc 
+    else
+        for file in "$dir"/*; do
+            if [[ -f "$file" ]];then
+                cmd rm "$file" $optc
+            elif [[ -d "$file" ]];then
+                recursiveDeletion "$file" $optc
+            fi
+        done
+       fi        
+    cmd rmdir "$1" $optc  
+}
+
+#----------------------Variable initiation--------------------------#
+shopt -s dotglob
+optc=1
+optr=1 
+optb=1
 newFolder=1
 OPTSTRING=":cb:r:"
-opcao=1   
-opcao2=1   
+#-----------------------------------------------------------------------#
+
 while getopts ${OPTSTRING} opt; do
   case ${opt} in
     c)
-      opcao=0
+      optc=0
       ;;
     b)
+      optb=0
       echo "Option -b was triggered, Argument: ${OPTARG}"
       ;;
     r)
-      echo "Option -r was triggered, Argument: ${OPTARG}"
-      opcao2=0
+      #echo "Option -r was triggered, Argument: ${OPTARG}"
+      optr=0
       REGEX=${OPTARG}
       ;;
     :) 
@@ -30,8 +76,8 @@ while getopts ${OPTSTRING} opt; do
       exit 1
       ;;
   esac
- done
- 
+ done 
+
  if [[ $(($# - $OPTIND + 1)) -ne 2 ]]; then #+1 porque o getopts indica o index seguinte do ultimo getopts flag
          echo "Não foram passados 2 argumentos como diretoria";
          exit 1
@@ -56,63 +102,95 @@ if [[ "$WORKFOLDER" == "$BACKUPFOLDER" ]]; then
 	exit 1
 fi
 
-if ! [ -d  $BACKUPFOLDER ]; then
-if [ -f $BACKUPFOLDER ]; then
-	echo "Já existe um ficheiro com este nome, impossível criar a diretoria de backup"
+
+if ! [ -d  "$BACKUPFOLDER" ]; then
+if [ -f "$BACKUPFOLDER" ]; then
+    echo "» Impossível criar a diretoria de backup $BACKUPFOLDER, já existe um ficheiro com o mesmo nome «"
 	exit 1
 else
-	mkdir "$BACKUPFOLDER"
-	newFolder=0
-fi
+        # meter cmd
+        #echo "$BACKUPFOLDER"
+        #echo $(ls -A "$WORKFOLDER")
+        if [[ $optr -eq 0 ]] ; then
+            if ! [[ -z $(ls -A "$WORKFOLDER") ]] ; then
+                checkSubRegex "$WORKFOLDER" "$BACKUPFOLDER" $optc
+            fi
+        else
+            cmd mkdir "$BACKUPFOLDER" $optc
+        fi
+        newFolder=0
+    fi
 
 fi
 
 WORKFOLDER=$(realpath "$WORKFOLDER")
-BACKUPFOLDER=$(realpath "$BACKUPFOLDER")
+if ! [[ $newFolder -eq 0 ]] ; then
+    BACKUPFOLDER=$(realpath "$BACKUPFOLDER")
+fi
 #echo "$BACKUPFOLDER"
 
 if [[ "$BACKUPFOLDER" == "$WORKFOLDER"* ]]; then
 
         echo "A diretoria escolhida como destino de backup está contida na diretoria de trabalho"
 	echo "Escolha uma diretoria diferente"
-	if [[ $newFolder -eq 0 ]]; then
-
-		rmdir "$BACKUPFOLDER"
-	fi
 	exit 1
 fi
 
+if [[ $optb -eq 0 ]] ; then
+    if ! [[ -f $TFILE ]] ; then
+        echo "O ficheiro indicado para a flag -b não é válido"
+        echo "Escolha um ficheiro válido"
+        exit 1
+    fi
+
+    mapfile IGNORE < "$TFILE"
+fi
 
 
 for file in "$WORKFOLDER"/*; do
-	if [[ -f $file ]]; then
-            if [[ $opcao2 -ne 0 || ${file##*/} =~ ^$REGEX$ ]];then
-               	if [[ "$file" -nt "${BACKUPFOLDER}/${file##*/}" ]]; then
-			cmd "cp -a $file ${BACKUPFOLDER}/${file##*/}" $opcao
-		elif [[ "${BACKUPFOLDER}/${file##*/}" -nt "$file" ]]; then
-			echo "WARNING: backup entry ${BACKUPFOLDER}/${file##*/} is newer than ${WORKFOLDER}/${file##*/}; Should not happen"
-		fi
+    ignored=1
+	if [[ -f "$file" ]]; then
+            if [[ $optb -eq 0 ]] ; then
+                for ignfile in "${IGNORE[@]}" ; do
+                    ignfile=$(echo ${ignfile##*/} | tr -d '\n')
+                    if [[ "${ignfile##*/}" == "${file##*/}" ]] ; then
+                        ignored=0
+                        break
+                    fi
+                done
+            fi
+            if [[ $ignored -eq 1 && ($optr -ne 0 || "${file##*/}" =~ ^$REGEX$) ]];then
+                if [[ "$file" -nt "${BACKUPFOLDER}/${file##*/}" ]]; then
+                    cmd cp -a "$file" "${BACKUPFOLDER}/${file##*/}" $optc
+                elif [[ "${BACKUPFOLDER}/${file##*/}" -nt "$file" ]]; then
+                    echo "WARNING: backup entry ${BACKUPFOLDER}/${file##*/} is newer than ${WORKFOLDER}/${file##*/}; Should not happen"
+                    fi
             fi
         elif [[ -d $file ]]; then
-            indexNewDirectory=$(( $# - 1 )) #Devido à ordem de passagem dos argumentos
+            indexNewDirectory=$(( $# - 2 )) #Devido à ordem de passagem dos argumentos
             #${!indexNewDirectory}="$file" Não dá para atribuir valores com indirect expansion
             # Por isso, uma vez que $@ retorna um array com os argumentos, usamos array slicing + set
             # para modificar os argumentos posicionais
             #
             NEWFOLDERNAME="${BACKUPFOLDER}/${file##*/}"
-            set -- "${@:1:((indexNewDirectory - 1))}" "$file" "$NEWFOLDERNAME"
+            set -- "${@:1:((indexNewDirectory))}" "$file" "$NEWFOLDERNAME"
             #echo $@
             
-            echo -e "\n" #-e enables interpretation of backslash escapes" 
-            if ! [ -d  "$NEWFOLDERNAME" ]; then
-                if [ -f "$NEWFOLDERNAME" ]; then
-	            echo "Já existe um ficheiro com este nome, impossível criar a diretoria de backup"
-	        else
-                    	             cmd "mkdir $NEWFOLDERNAME" $opcao
-                fi  
-
-            fi
-
             ./backup.sh "$@"
         fi
 done
+
+for file in "$BACKUPFOLDER"/*; do
+    if [[ -f "$file" ]];then
+    #echo "$file"
+   	if  ! [[ -f "${WORKFOLDER}/${file##*/}" ]]; then    
+            cmd rm "$file" $optc
+        fi
+    
+    elif [[ -d "$file" ]]; then
+        if  ! [[ -d "${WORKFOLDER}/${file##*/}" ]]; then
+            recursiveDeletion "$file" $optc 
+        fi
+    fi
+done
+
