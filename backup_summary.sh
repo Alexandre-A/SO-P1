@@ -120,11 +120,28 @@ if [[ "$WORKFOLDER" == "$BACKUPFOLDER" ]]; then
 	exit 1
 fi
 
-if ! [ -d  "$BACKUPFOLDER" ]; then
-if [ -f "$BACKUPFOLDER" ]; then
-    echo "» Impossível criar a diretoria de backup $BACKUPFOLDER, já existe um ficheiro com o mesmo nome «"
-	exit 1
+WORKFOLDER=$(realpath "$WORKFOLDER")
+if [[ $optr -eq 0 ]] ; then
+    if ! [[ $newFolder -eq 0 ]] ; then
+        BACKUPFOLDER=$(realpath "$BACKUPFOLDER")
+    fi
 else
+    BACKUPFOLDER=$(realpath "$BACKUPFOLDER")
+fi
+#echo "$BACKUPFOLDER"
+
+if [[ "$BACKUPFOLDER" == "$WORKFOLDER"* ]]; then
+
+    echo "A diretoria escolhida como destino de backup está contida na diretoria de trabalho"
+    echo "Escolha uma diretoria diferente"
+    exit 1
+fi
+
+if ! [ -d  "$BACKUPFOLDER" ]; then
+    if [ -f "$BACKUPFOLDER" ]; then
+        echo "» Impossível criar a diretoria de backup $BACKUPFOLDER, já existe um ficheiro com o mesmo nome «"
+        exit 1
+    else
         # meter cmd
         #echo "$BACKUPFOLDER"
         #echo $(ls -A "$WORKFOLDER")
@@ -142,19 +159,6 @@ else
         newFolder=0
     fi
 
-fi
-
-WORKFOLDER=$(realpath "$WORKFOLDER")
-if ! [[ $newFolder -eq 0 ]] ; then
-    BACKUPFOLDER=$(realpath "$BACKUPFOLDER")
-fi
-#echo "$BACKUPFOLDER"
-
-if [[ "$BACKUPFOLDER" == "$WORKFOLDER"* ]]; then
-
-        echo "A diretoria escolhida como destino de backup está contida na diretoria de trabalho"
-	echo "Escolha uma diretoria diferente"
-	exit 1
 fi
 
 if [[ $optb -eq 0 ]] ; then
