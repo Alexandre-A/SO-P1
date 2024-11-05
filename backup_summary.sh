@@ -14,7 +14,7 @@ function checkSubRegex() { #VER SE AQUI TMB METO A CONTAGEM DOS ERROS!
         if [[ -d "$file" ]] ; then
             checkSubRegex "$file" "$2" $3
             if [[ $? -eq 0 ]] ; then
-                cmd mkdir -p"$2" $3
+                cmd mkdir -p "$2" $3
                 break
             fi
         else
