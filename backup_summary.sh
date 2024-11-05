@@ -1,5 +1,7 @@
 #!/bin/bash
 
+export LC_ALL=C
+
 function cmd() {
     OIFS=$IFS
     IFS=$'\n'
