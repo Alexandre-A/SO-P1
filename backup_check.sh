@@ -106,7 +106,7 @@ for file in "$BACKUPFOLDER"/*; do
     #elif [[ -d "$file" ]]; then
         # Voltar a chamar o ficheiro, usando o gaslight dos anteriores
         #fi
-    elif [[ -d "$file" ]] ; then
+    elif [[ -d "$file" && -d "$WORKFOLDER/${file##*/}" ]] ; then
         set -- "$WORKFOLDER/${file##*/}" "$BACKUPFOLDER/${file##*/}"
         ./backup_check.sh "$@"
     fi
