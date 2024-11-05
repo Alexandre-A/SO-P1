@@ -76,8 +76,9 @@ while getopts ${OPTSTRING} opt; do
       optc=0
       ;;
     b)
+      #echo "Option -b was triggered, Argument: ${OPTARG}"
       optb=0
-      echo "Option -b was triggered, Argument: ${OPTARG}"
+      TFILE=${OPTARG}
       ;;
     r)
       #echo "Option -r was triggered, Argument: ${OPTARG}"
@@ -247,6 +248,6 @@ done
 # if backupfolder is empty, rmdir essa directory
 
 if [[ $showsummary -eq 0 ]]; then # apenas dá display se cumprir o regex, no caso do -r estar ativo, ou não usar o -r
-    echo "While backuping $WORKFOLDER : ${summaryArray[0]} Errors; ${summaryArray[1]} Warnings; ${summaryArray[2]} Updated; ${summaryArray[3]} Copied (${summaryArray[4]} B); ${summaryArray[5]}  deleted (${summaryArray[6]} B)" 
+    echo "While backuping $WORKFOLDER : ${summaryArray[0]} Errors; ${summaryArray[1]} Warnings; ${summaryArray[2]} Updated; ${summaryArray[3]} Copied (${summaryArray[4]} B); ${summaryArray[5]} deleted (${summaryArray[6]} B)" 
     echo
 fi
