@@ -156,8 +156,8 @@ for file in "$WORKFOLDER"/*; do
     if [[ -f "$file" ]]; then
         if [[ $optb -eq 0 ]] ; then
             for ignfile in "${IGNORE[@]}" ; do
-                ignfile=$(echo "${ignfile##*/}" | tr -d '\n')
-                if [[ "${ignfile##*/}" == "${file##*/}" ]] ; then
+                ignfile=$(echo "${ignfile}" | tr -d '\n') # TESTAR TESTAR TESTAR TESTAR TESTAR TESTAR COM PATH ABSOLUTO
+                if [[ "$ignfile" == "${file##*/}" ]] ; then
                     ignored=0
                     break
                 fi
