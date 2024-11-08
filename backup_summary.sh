@@ -35,6 +35,7 @@ function recursiveDeletion(){
     local dir="$1"
     local optc="$2"
     local erros="$3"   
+    echo
     if ! [ -n "$(find "$dir" -mindepth 1 -maxdepth 1 -print -quit)" ]; then #Se a diretoria estiver vazia
         cmd rmdir "$1" $optc
         if ! [[ $? -eq 0 ]];then #Se houve erro a copiar
@@ -54,7 +55,7 @@ function recursiveDeletion(){
             fi
         done
        fi        
-    cmd rmdir "$1" $optc 
+    cmd rmdir "$1" $optc
     if ! [[ $? -eq 0 ]];then #Se houve erro a copiar
             erros=$((erros+1))
     fi
@@ -189,17 +190,18 @@ for file in "$WORKFOLDER"/*; do
         if [[ $ignored -eq 1 && ($optr -ne 0 || "${file##*/}" =~ ^$REGEX$) ]];then
             showsummary=0
             if [[ "$file" -nt "${BACKUPFOLDER}/${file##*/}" ]]; then
+                if ! [[ -f "${BACKUPFOLDER}/${file##*/}" ]]; then
+                    iscopia=0
+                fi
                 cmd cp -a "$file" "${BACKUPFOLDER}/${file##*/}" $optc
                 if [[ $? -eq 0 ]];then #Se não houve erro a copiar
                     if [[  $optc -ne 0 ]];then #Se não foi ativada a flag -c
-                        if ! [[ -f "${BACKUPFOLDER}/${file##*/}" ]]; then #Para ver se o file foi updated ou copied
-                            tamanho=$(ls -l "$file" | awk '{print $5}')
-                            summaryArray[4]=$(( summaryArray[4]+ tamanho))
-                            iscopia=0
-                            #echo $tamanho 
-                        fi
+                        echo  "${BACKUPFOLDER}/${file##*/}" 
                         if [[ $iscopia -eq 0 ]];then #Se foi agora copiado (new file)
                             summaryArray[3]=$((summaryArray[3]+1))
+                            tamanho=$(ls -l "$file" | awk '{print $5}')
+                            summaryArray[4]=$(( summaryArray[4]+ tamanho))
+
                         else
                             summaryArray[2]=$((summaryArray[2]+1))
                         fi
@@ -230,7 +232,7 @@ done
 for file in "$BACKUPFOLDER"/*; do
     if [[ -f "$file" ]];then
     #echo "$file"
-   	if  ! [[ -f "${WORKFOLDER}/${file##*/}" ]]; then    
+   	if  ! [ -f "${WORKFOLDER}/${file##*/}" ]; then    
             if [[  $optc -ne 0 ]];then
                 tamanho=$(ls -l "$file" | awk '{print $5}')
                 summaryArray[6]=$(( summaryArray[6]+ tamanho))
