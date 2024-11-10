@@ -1,11 +1,12 @@
 #!/bin/bash
 
-export LC_ALL=C
+export LC_ALL=C.UTF-8
 
 . cmd.sh
 . checkSubRegex.sh
-. recursiveDeletion.sh
 . probeArgs.sh
+
+
 
 #----------------------Variable initiation--------------------------#
 shopt -s dotglob
@@ -15,6 +16,25 @@ optb=1
 newFolder=1
 OPTSTRING=":cb:r:"
 #-----------------------------------------------------------------------#
+
+
+function recursiveDeletion(){
+    # $1 -> directory; $2 -> optc
+    local dir="$1"
+    local optc="$2"
+    if ! [ -n "$(find "$dir" -mindepth 1 -maxdepth 1 -print -quit)" ]; then #Se a diretoria estiver vazia
+        cmd rmdir "$1" $optc 
+    else
+        for file in "$dir"/*; do
+            if [[ -f "$file" ]];then
+                cmd rm "$file" $optc
+            elif [[ -d "$file" ]];then
+                recursiveDeletion "$file" $optc
+            fi
+        done
+       fi        
+    cmd rmdir "$1" $optc  
+}
 
 while getopts ${OPTSTRING} opt; do
     case ${opt} in
@@ -66,13 +86,35 @@ fi
 
 probeArgs "$WORKFOLDER" "$BACKUPFOLDER" $optr $optc $optb "$TFILE" "$REGEX"
 output=$?
-if [[ $output -eq 0 ]] ; then
-    newFolder=0
-elif [[ $output -eq 2 ]] ; then
+if [[ $output -eq 2 ]] ; then
     exit 1
 fi
 
+
+if ! [ -d  "$BACKUPFOLDER" ]; then
+    if [ -f "$BACKUPFOLDER" ]; then
+        echo "» Impossível criar a diretoria de backup $BACKUPFOLDER, já existe um ficheiro com o mesmo nome «"
+        #exit 1
+        exit 1
+    else
+        # meter cmd
+        #echo "$BACKUPFOLDER"
+        #echo $(ls -A "$WORKFOLDER")
+        if [[ $optr -eq 0 ]] ; then
+            if ! [[ -z $(ls -A "$WORKFOLDER") ]] ; then
+                checkSubRegex "$WORKFOLDER" "$BACKUPFOLDER" $optc $REGEX
+            fi
+        else
+            cmd mkdir "$BACKUPFOLDER" $optc
+        fi
+        newFolder=0
+    fi
+fi
+
 WORKFOLDER=$(realpath "$WORKFOLDER")
+if [[ $? -ne 0 ]] ; then
+    exit 1
+fi
 if [[ $optr -eq 0 ]] ; then
     if ! [[ $newFolder -eq 0 ]] ; then
         BACKUPFOLDER=$(realpath "$BACKUPFOLDER")
@@ -80,7 +122,6 @@ if [[ $optr -eq 0 ]] ; then
             exit 1
         fi
     fi
-
 elif [[ $optc -ne 0 ]] ; then
     BACKUPFOLDER=$(realpath "$BACKUPFOLDER")
     if [[ $? -ne 0 ]] ; then

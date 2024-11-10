@@ -46,24 +46,4 @@ function probeArgs() {
         return 2
     fi
 
-    if ! [ -d  "$2" ]; then
-        if [ -f "$2" ]; then
-            echo "» Impossível criar a diretoria de backup $2, já existe um ficheiro com o mesmo nome «"
-            #exit 1
-            return 2
-        else
-            # meter cmd
-            #echo "$BACKUPFOLDER"
-            #echo $(ls -A "$WORKFOLDER")
-            if [[ $3 -eq 0 ]] ; then
-                if ! [[ -z $(ls -A "$1") ]] ; then
-                    checkSubRegex "$1" "$2" $4 $7
-                fi
-            else
-                cmd mkdir "$2" $4
-            fi
-            #newFolder=0
-            return 0
-        fi
-    fi
 }

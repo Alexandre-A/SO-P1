@@ -2,33 +2,39 @@
 
 export LC_ALL=C.UTF-8
 
-function cmd() {
-    OIFS=$IFS
-    IFS=$'\n'
-    [[ "${@: -1}" -eq 0 ]] && echo "${@:1:$#-1}" || (echo ${@:1:$#-1} && ${@:1:$#-1})
-    a=$?
-    IFS=$OIFS
-    return $a
-}
+. cmd.sh
+. checkSubRegex.sh
+. probeArgs.sh
 
-function checkSubRegex() { #VER SE AQUI TMB METO A CONTAGEM DOS ERROS!
-    for file in "$1"/*; do
-        if [[ -d "$file" ]]; then
-            checkSubRegex "$file" "$2" $3
-            if [[ $? -eq 0 ]]; then
-                cmd mkdir -p "$2" $3
-                break
-            fi
-        else
-            if [[ "${file##*/}" =~ ^$REGEX$ ]]; then
-                cmd mkdir -p "$2" $3
-                return 0
-            else
-                return 1
-            fi
-        fi
-    done
-}
+
+shopt -s dotglob
+#function cmd() {
+#    OIFS=$IFS
+#    IFS=$'\n'
+#    [[ "${@: -1}" -eq 0 ]] && echo "${@:1:$#-1}" || (echo ${@:1:$#-1} && ${@:1:$#-1})
+#    a=$?
+#    IFS=$OIFS
+#    return $a
+#}
+
+#function checkSubRegex() { #VER SE AQUI TMB METO A CONTAGEM DOS ERROS!
+#    for file in "$1"/*; do
+#        if [[ -d "$file" ]]; then
+#            checkSubRegex "$file" "$2" $3
+#            if [[ $? -eq 0 ]]; then
+#                cmd mkdir -p "$2" $3
+#                break
+#            fi
+#        else
+#           if [[ "${file##*/}" =~ ^$REGEX$ ]]; then
+#               cmd mkdir -p "$2" $3
+#               return 0
+#           else
+#               return 1
+#           fi
+#       fi
+#   done
+#}
 
 function recursiveDeletion() {
     # $1 -> directory; $2 -> optc; $3 -> número de erros
@@ -63,7 +69,6 @@ function recursiveDeletion() {
 
 }
 #----------------------Variable initiation--------------------------#
-shopt -s dotglob
 optc=1
 optr=1
 optb=1
@@ -121,20 +126,9 @@ if [[ "$WORKFOLDER" == "$BACKUPFOLDER" ]]; then
     exit 1
 fi
 
-WORKFOLDER=$(realpath "$WORKFOLDER")
-if [[ $optr -eq 0 ]]; then
-    if ! [[ $newFolder -eq 0 ]]; then
-        BACKUPFOLDER=$(realpath "$BACKUPFOLDER")
-    fi
-else
-    BACKUPFOLDER=$(realpath "$BACKUPFOLDER")
-fi
-#echo "$BACKUPFOLDER"
-
-if [[ "$BACKUPFOLDER" == "$WORKFOLDER"* ]]; then
-
-    echo "A diretoria escolhida como destino de backup está contida na diretoria de trabalho"
-    echo "Escolha uma diretoria diferente"
+probeArgs "$WORKFOLDER" "$BACKUPFOLDER" $optr $optc $optb "$TFILE" "$REGEX"
+output=$?
+if [[ $output -eq 2 ]] ; then
     exit 1
 fi
 
@@ -148,7 +142,7 @@ if ! [ -d "$BACKUPFOLDER" ]; then
         #echo $(ls -A "$WORKFOLDER")
         if [[ $optr -eq 0 ]]; then
             if ! [[ -z $(ls -A "$WORKFOLDER") ]]; then
-                checkSubRegex "$WORKFOLDER" "$BACKUPFOLDER" $optc
+                checkSubRegex "$WORKFOLDER" "$BACKUPFOLDER" $optc $REGEX
             fi
         else
             cmd mkdir "$BACKUPFOLDER" $optc
@@ -162,14 +156,44 @@ if ! [ -d "$BACKUPFOLDER" ]; then
 
 fi
 
-if [[ $optb -eq 0 ]]; then
-    if ! [[ -f $TFILE ]]; then
-        echo "O ficheiro indicado para a flag -b não é válido"
-        echo "Escolha um ficheiro válido"
+WORKFOLDER=$(realpath "$WORKFOLDER")
+if [[ $? -ne 0 ]] ; then
+    exit 1
+fi
+if [[ $optr -eq 0 ]] ; then
+    if ! [[ $newFolder -eq 0 ]] ; then
+        BACKUPFOLDER=$(realpath "$BACKUPFOLDER")
+        if [[ $? -ne 0 ]] ; then
+            exit 1
+        fi
+    fi
+elif [[ $optc -ne 0 ]] ; then
+    BACKUPFOLDER=$(realpath "$BACKUPFOLDER")
+    if [[ $? -ne 0 ]] ; then
         exit 1
     fi
+fi
+#echo "$BACKUPFOLDER"
 
-    mapfile IGNORE <"$TFILE"
+#if [[ "$BACKUPFOLDER" == "$WORKFOLDER"* ]]; then
+#
+    #echo "A diretoria escolhida como destino de backup está contida na diretoria de trabalho"
+    #echo "Escolha uma diretoria diferente"
+    #exit 1
+#fi
+#
+#if [[ $optb -eq 0 ]]; then
+    #if ! [[ -f $TFILE ]]; then
+        #echo "O ficheiro indicado para a flag -b não é válido"
+        #echo "Escolha um ficheiro válido"
+        #exit 1
+    #fi
+#
+    #mapfile IGNORE <"$TFILE"
+#fi
+
+if [[ $optb -eq 0 ]] ; then
+    mapfile IGNORE < "$TFILE"
 fi
 
 for file in "$WORKFOLDER"/*; do
