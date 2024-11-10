@@ -1,6 +1,6 @@
 #!/bin/bash
 
-export LC_ALL=C
+export LC_ALL=C.UTF-8
 #shopt -s dotglob - need to check if this is required here due to the nature of functions in bash
 
 . cmd.sh

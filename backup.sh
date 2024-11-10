@@ -150,11 +150,21 @@ for file in "$WORKFOLDER"/*; do
             done
         fi
         if [[ $ignored -eq 1 && ($optr -ne 0 || "${file##*/}" =~ $REGEX) ]];then
-            if [[ "$file" -nt "${BACKUPFOLDER}/${file##*/}" ]]; then
-                cmd cp -a "$file" "${BACKUPFOLDER}/${file##*/}" $optc
-            elif [[ "${BACKUPFOLDER}/${file##*/}" -nt "$file" ]]; then
-                echo "WARNING: backup entry ${BACKUPFOLDER}/${file##*/} is newer than ${WORKFOLDER}/${file##*/}; Should not happen"
+             if [[ -f "${BACKUPFOLDER}/${file##*/}" ]]; then
+                mod_time1=$(stat -c %Y "${file}")
+                mod_time2=$(stat -c %Y "${BACKUPFOLDER}/${file##*/}")
+                #echo $mod_time1
+                #echo $mod_time2
+
+                if [[ $mod_time2 -gt $mod_time1 ]]; then
+                    echo "WARNING: backup entry ${BACKUPFOLDER}/${file##*/} is newer than ${WORKFOLDER}/${file##*/}; Should not happen"
+                    continue
+                elif [[ $mod_time1 -eq $mod_time2 ]]; then
+                    continue
+                fi
             fi
+
+            cmd cp -a "$file" "${BACKUPFOLDER}/${file##*/}" $optc
         fi
     elif [[ -d $file ]]; then
         indexNewDirectory=$(( $# - 2 )) #Devido à ordem de passagem dos argumentos
