@@ -8,33 +8,6 @@ export LC_ALL=C.UTF-8
 
 
 shopt -s dotglob
-#function cmd() {
-#    OIFS=$IFS
-#    IFS=$'\n'
-#    [[ "${@: -1}" -eq 0 ]] && echo "${@:1:$#-1}" || (echo ${@:1:$#-1} && ${@:1:$#-1})
-#    a=$?
-#    IFS=$OIFS
-#    return $a
-#}
-
-#function checkSubRegex() { #VER SE AQUI TMB METO A CONTAGEM DOS ERROS!
-#    for file in "$1"/*; do
-#        if [[ -d "$file" ]]; then
-#            checkSubRegex "$file" "$2" $3
-#            if [[ $? -eq 0 ]]; then
-#                cmd mkdir -p "$2" $3
-#                break
-#            fi
-#        else
-#           if [[ "${file##*/}" =~ ^$REGEX$ ]]; then
-#               cmd mkdir -p "$2" $3
-#               return 0
-#           else
-#               return 1
-#           fi
-#       fi
-#   done
-#}
 
 function recursiveDeletion() {
     # $1 -> directory; $2 -> optc; $3 -> número de erros
@@ -84,12 +57,10 @@ while getopts ${OPTSTRING} opt; do
         optc=0
         ;;
     b)
-        #echo "Option -b was triggered, Argument: ${OPTARG}"
         optb=0
         TFILE=${OPTARG}
         ;;
     r)
-        #echo "Option -r was triggered, Argument: ${OPTARG}"
         optr=0
         REGEX=${OPTARG}
         ;;
@@ -137,9 +108,6 @@ if ! [ -d "$BACKUPFOLDER" ]; then
         echo "» Impossível criar a diretoria de backup $BACKUPFOLDER, já existe um ficheiro com o mesmo nome «"
         exit 1
     else
-        # meter cmd
-        #echo "$BACKUPFOLDER"
-        #echo $(ls -A "$WORKFOLDER")
         if [[ $optr -eq 0 ]]; then
             if ! [[ -z $(ls -A "$WORKFOLDER") ]]; then
                 checkSubRegex "$WORKFOLDER" "$BACKUPFOLDER" $optc $REGEX
@@ -173,24 +141,6 @@ elif [[ $optc -ne 0 ]] ; then
         exit 1
     fi
 fi
-#echo "$BACKUPFOLDER"
-
-#if [[ "$BACKUPFOLDER" == "$WORKFOLDER"* ]]; then
-#
-    #echo "A diretoria escolhida como destino de backup está contida na diretoria de trabalho"
-    #echo "Escolha uma diretoria diferente"
-    #exit 1
-#fi
-#
-#if [[ $optb -eq 0 ]]; then
-    #if ! [[ -f $TFILE ]]; then
-        #echo "O ficheiro indicado para a flag -b não é válido"
-        #echo "Escolha um ficheiro válido"
-        #exit 1
-    #fi
-#
-    #mapfile IGNORE <"$TFILE"
-#fi
 
 if [[ $optb -eq 0 ]] ; then
     mapfile IGNORE < "$TFILE"
@@ -214,8 +164,6 @@ for file in "$WORKFOLDER"/*; do
             if [[ -f "${BACKUPFOLDER}/${file##*/}" ]]; then
                 mod_time1=$(stat -c %Y "${file}")
                 mod_time2=$(stat -c %Y "${BACKUPFOLDER}/${file##*/}")
-                #echo $mod_time1
-                #echo $mod_time2
 
                 if [[ $mod_time2 -gt $mod_time1 ]]; then
                     echo "WARNING: backup entry ${BACKUPFOLDER}/${file##*/} is newer than ${WORKFOLDER}/${file##*/}; Should not happen"
@@ -283,8 +231,7 @@ for file in "$BACKUPFOLDER"/*; do
     fi
 done
 
-# if backupfolder is empty, rmdir essa directory
-
+# if backupfolder is empty, rmdir the directory
 if [[ $showsummary -eq 0 ]]; then # apenas dá display se cumprir o regex, no caso do -r estar ativo, ou não usar o -r
     echo "While backuping $WORKFOLDER : ${summaryArray[0]} Errors; ${summaryArray[1]} Warnings; ${summaryArray[2]} Updated; ${summaryArray[3]} Copied (${summaryArray[4]} B); ${summaryArray[5]} deleted (${summaryArray[6]} B)"
     echo

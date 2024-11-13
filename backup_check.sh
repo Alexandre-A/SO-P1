@@ -33,7 +33,6 @@ BACKUPFOLDER=$(realpath "$BACKUPFOLDER")
 
 for file in "$BACKUPFOLDER"/*; do
 	if [[ -f "$file" ]]; then
-		#echo "$file"
 		if [[ -f "${WORKFOLDER}/${file##*/}" ]]; then
 			a=$(md5sum "$file" | awk '{print $1}')
 			b=$(md5sum "${WORKFOLDER}/${file##*/}" | awk '{print $1}')

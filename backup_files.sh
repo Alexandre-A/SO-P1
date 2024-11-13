@@ -92,7 +92,6 @@ done
 
 for file in "$BACKUPFOLDER"/*; do
     if [[ -f "$file" ]]; then
-        #echo "$file"
         if ! [[ -f "${WORKFOLDER}/${file##*/}" ]]; then
             cmd rm "$file" $optc
         fi

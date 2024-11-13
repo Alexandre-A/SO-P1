@@ -7,7 +7,7 @@
 
 ### Ficheiros funcionais (segundo as condições do guião)
 
-- [ ] backup_files.sh
+- [x] backup_files.sh
 - [ ] backup.sh
 - [ ] backup_summary.sh
-- [ ] backup_check.sh
+- [x] backup_check.sh

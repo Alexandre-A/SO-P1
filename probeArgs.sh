@@ -33,7 +33,6 @@ function probeArgs() {
 		if ! [[ -f "$6" ]]; then
 			echo "O ficheiro indicado para a flag -b não é válido"
 			echo "Escolha um ficheiro válido"
-			#exit 1
 			return 2
 		fi
 	#mapfile IGNORE < "$TFILE"
@@ -45,7 +44,6 @@ function probeArgs() {
 	if [[ "$BACKUPFOLDER" == "$WORKFOLDER"* ]]; then
 		echo "A diretoria escolhida como destino de backup está contida na diretoria de trabalho"
 		echo "Escolha uma diretoria diferente"
-		#exit 1
 		return 2
 	fi
 

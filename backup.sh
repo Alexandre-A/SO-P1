@@ -94,12 +94,8 @@ fi
 if ! [ -d  "$BACKUPFOLDER" ]; then
     if [ -f "$BACKUPFOLDER" ]; then
         echo "» Impossível criar a diretoria de backup $BACKUPFOLDER, já existe um ficheiro com o mesmo nome «"
-        #exit 1
         exit 1
     else
-        # meter cmd
-        #echo "$BACKUPFOLDER"
-        #echo $(ls -A "$WORKFOLDER")
         if [[ $optr -eq 0 ]] ; then
             if ! [[ -z $(ls -A "$WORKFOLDER") ]] ; then
                 checkSubRegex "$WORKFOLDER" "$BACKUPFOLDER" $optc $REGEX
@@ -128,9 +124,6 @@ elif [[ $optc -ne 0 ]] ; then
         exit 1
     fi
 fi
-#echo "$BACKUPFOLDER"
-
-#echo probe output: $output
 
 if [[ $optb -eq 0 ]] ; then
     mapfile IGNORE < "$TFILE"
@@ -153,8 +146,6 @@ for file in "$WORKFOLDER"/*; do
              if [[ -f "${BACKUPFOLDER}/${file##*/}" ]]; then
                 mod_time1=$(stat -c %Y "${file}")
                 mod_time2=$(stat -c %Y "${BACKUPFOLDER}/${file##*/}")
-                #echo $mod_time1
-                #echo $mod_time2
 
                 if [[ $mod_time2 -gt $mod_time1 ]]; then
                     echo "WARNING: backup entry ${BACKUPFOLDER}/${file##*/} is newer than ${WORKFOLDER}/${file##*/}; Should not happen"
@@ -180,7 +171,6 @@ done
 
 for file in "$BACKUPFOLDER"/*; do
     if [[ -f "$file" ]];then
-        #echo "$file"
         if  ! [[ -f "${WORKFOLDER}/${file##*/}" ]]; then    
             cmd rm "$file" $optc
         fi
