@@ -149,16 +149,16 @@ fi
 for file in "$WORKFOLDER"/*; do
     ignored=1
     iscopia=1
+    if [[ $optb -eq 0 ]]; then
+        for ignfile in "${IGNORE[@]}"; do
+            ignfile="$(echo ${ignfile} | tr -d '\n')"
+            if [[ "$ignfile" == "$file" ]]; then
+                ignored=0
+                break
+            fi
+        done
+    fi
     if [[ -f "$file" ]]; then
-        if [[ $optb -eq 0 ]]; then
-            for ignfile in "${IGNORE[@]}"; do
-                ignfile=$(echo ${ignfile##*/} | tr -d '\n')
-                if [[ "${ignfile##*/}" == "${file##*/}" ]]; then
-                    ignored=0
-                    break
-                fi
-            done
-        fi
         if [[ $ignored -eq 1 && ($optr -ne 0 || "${file##*/}" =~ ^$REGEX$) ]]; then
             showsummary=0
             if [[ -f "${BACKUPFOLDER}/${file##*/}" ]]; then
@@ -193,6 +193,9 @@ for file in "$WORKFOLDER"/*; do
             fi
         fi
     elif [[ -d $file ]]; then
+        if [[ $ignored -eq 0 ]] ; then
+            continue
+        fi
         indexNewDirectory=$(($# - 2)) #Devido à ordem de passagem dos argumentos
         #${!indexNewDirectory}="$file" Não dá para atribuir valores com indirect expansion
         # Por isso, uma vez que $@ retorna um array com os argumentos, usamos array slicing + set

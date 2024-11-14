@@ -132,16 +132,16 @@ fi
 
 for file in "$WORKFOLDER"/*; do
     ignored=1
+    if [[ $optb -eq 0 ]] ; then
+        for ignfile in "${IGNORE[@]}" ; do
+            ignfile="$(echo "${ignfile}" | tr -d '\n')"
+            if [[ "$ignfile" == "$file" ]] ; then
+                ignored=0
+                break
+            fi
+        done
+    fi
     if [[ -f "$file" ]]; then
-        if [[ $optb -eq 0 ]] ; then
-            for ignfile in "${IGNORE[@]}" ; do
-                ignfile="$(echo "${ignfile}" | tr -d '\n')" # TESTAR COM PATH ABSOLUTO
-                if [[ "$ignfile" == "$file" ]] ; then
-                    ignored=0
-                    break
-                fi
-            done
-        fi
         if [[ $ignored -eq 1 && ($optr -ne 0 || "${file##*/}" =~ $REGEX) ]];then
              if [[ -f "${BACKUPFOLDER}/${file##*/}" ]]; then
                 mod_time1=$(stat -c %Y "${file}")
@@ -158,6 +158,9 @@ for file in "$WORKFOLDER"/*; do
             cmd cp -a "$file" "${BACKUPFOLDER}/${file##*/}" $optc
         fi
     elif [[ -d $file ]]; then
+        if [[ $ignored -eq 0 ]] ; then
+            continue
+        fi
         indexNewDirectory=$(( $# - 2 )) #Devido à ordem de passagem dos argumentos
         #${!indexNewDirectory}="$file" Não dá para atribuir valores com indirect expansion
         # Por isso, uma vez que $@ retorna um array com os argumentos, usamos array slicing + set
