@@ -127,7 +127,7 @@ fi
 if [[ "$BACKUPFOLDER" == "$WORKFOLDER"* ]]; then
     echo "A diretoria escolhida como destino de backup está contida na diretoria de trabalho"
     echo "Escolha uma diretoria diferente"
-    return 2
+    exit 1 
 fi
 
 if [[ $optb -eq 0 ]] ; then
