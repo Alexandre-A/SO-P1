@@ -83,7 +83,6 @@ if [[ "$WORKFOLDER" == "$BACKUPFOLDER" ]]; then
     exit 1
 fi
 
-
 probeArgs "$WORKFOLDER" "$BACKUPFOLDER" $optr $optc $optb "$TFILE" "$REGEX"
 output=$?
 if [[ $output -eq 2 ]] ; then
@@ -123,6 +122,12 @@ elif [[ $optc -ne 0 ]] ; then
     if [[ $? -ne 0 ]] ; then
         exit 1
     fi
+fi
+
+if [[ "$BACKUPFOLDER" == "$WORKFOLDER"* ]]; then
+    echo "A diretoria escolhida como destino de backup está contida na diretoria de trabalho"
+    echo "Escolha uma diretoria diferente"
+    return 2
 fi
 
 if [[ $optb -eq 0 ]] ; then
