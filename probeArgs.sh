@@ -38,10 +38,7 @@ function probeArgs() {
 	#mapfile IGNORE < "$TFILE"
 	fi
 
-	WORKFOLDER=$(realpath "$1")
-	BACKUPFOLDER=$(realpath "$2")
-
-	if [[ "$BACKUPFOLDER" == "$WORKFOLDER"* ]]; then
+	if [[ "$(realpath "$1")" == "$(realpath "$2")"* ]]; then
 		echo "A diretoria escolhida como destino de backup está contida na diretoria de trabalho"
 		echo "Escolha uma diretoria diferente"
 		return 2
