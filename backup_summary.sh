@@ -167,7 +167,7 @@ for file in "$WORKFOLDER"/*; do
         done
     fi
     if [[ -f "$file" ]]; then
-        if [[ $ignored -eq 1 && ($optr -ne 0 || "${file##*/}" =~ ^$REGEX$) ]]; then
+        if [[ $ignored -eq 1 && ($optr -ne 0 || "${file##*/}" =~ $REGEX) ]]; then
             showsummary=0
             if [[ -f "${BACKUPFOLDER}/${file##*/}" ]]; then
                 mod_time1=$(stat -c %Y "${file}")
