@@ -6,7 +6,6 @@ export LC_ALL=C.UTF-8
 . checkSubRegex.sh
 . probeArgs.sh
 
-
 shopt -s dotglob
 
 function recursiveDeletion() {
@@ -14,13 +13,14 @@ function recursiveDeletion() {
     local dir="$1"
     local optc="$2"
     local erros="$3"
+    local wasEmpty=1
     echo
     if ! [ -n "$(find "$dir" -mindepth 1 -maxdepth 1 -print -quit)" ]; then #Se a diretoria estiver vazia
+        wasEmpty=0
         cmd rmdir "$1" $optc
         if ! [[ $? -eq 0 ]]; then #Se houve erro a copiar
             erros=$((erros + 1))
-        fi
-        return $erros
+        fi 
     else
         for file in "$dir"/*; do
             if [[ -f "$file" ]]; then
@@ -34,9 +34,11 @@ function recursiveDeletion() {
             fi
         done
     fi
-    cmd rmdir "$1" $optc
-    if ! [[ $? -eq 0 ]]; then #Se houve erro a copiar
-        erros=$((erros + 1))
+    if [[ $wasEmpty -eq 1 ]]; then
+        cmd rmdir "$1" $optc
+        if ! [[ $? -eq 0 ]]; then #Se houve erro a copiar
+            erros=$((erros + 1))
+        fi
     fi
     return $erros
 
@@ -99,7 +101,13 @@ fi
 
 probeArgs "$WORKFOLDER" "$BACKUPFOLDER" $optr $optc $optb "$TFILE" "$REGEX"
 output=$?
-if [[ $output -eq 2 ]] ; then
+if [[ $output -eq 2 ]]; then
+    exit 1
+fi
+
+if [[ "$(realpath "$BACKUPFOLDER")" == "$(realpath "$WORKFOLDER")"* ]]; then
+    echo "A diretoria escolhida como destino de backup está contida na diretoria de trabalho"
+    echo "Escolha uma diretoria diferente"
     exit 1
 fi
 
@@ -125,31 +133,25 @@ if ! [ -d "$BACKUPFOLDER" ]; then
 fi
 
 WORKFOLDER=$(realpath "$WORKFOLDER")
-if [[ $? -ne 0 ]] ; then
+if [[ $? -ne 0 ]]; then
     exit 1
 fi
-if [[ $optr -eq 0 ]] ; then
-    if ! [[ $newFolder -eq 0 ]] ; then
+if [[ $optr -eq 0 ]]; then
+    if ! [[ $newFolder -eq 0 ]]; then
         BACKUPFOLDER=$(realpath "$BACKUPFOLDER")
-        if [[ $? -ne 0 ]] ; then
+        if [[ $? -ne 0 ]]; then
             exit 1
         fi
     fi
-elif [[ $optc -ne 0 ]] ; then
+elif [[ $optc -ne 0 ]]; then
     BACKUPFOLDER=$(realpath "$BACKUPFOLDER")
-    if [[ $? -ne 0 ]] ; then
+    if [[ $? -ne 0 ]]; then
         exit 1
     fi
 fi
 
-if [[ "$BACKUPFOLDER" == "$WORKFOLDER"* ]]; then
-    echo "A diretoria escolhida como destino de backup está contida na diretoria de trabalho"
-    echo "Escolha uma diretoria diferente"
-    exit 1
-fi
-
-if [[ $optb -eq 0 ]] ; then
-    mapfile IGNORE < "$TFILE"
+if [[ $optb -eq 0 ]]; then
+    mapfile IGNORE <"$TFILE"
 fi
 
 for file in "$WORKFOLDER"/*; do
@@ -199,7 +201,7 @@ for file in "$WORKFOLDER"/*; do
             fi
         fi
     elif [[ -d $file ]]; then
-        if [[ $ignored -eq 0 ]] ; then
+        if [[ $ignored -eq 0 ]]; then
             continue
         fi
         indexNewDirectory=$(($# - 2)) #Devido à ordem de passagem dos argumentos
