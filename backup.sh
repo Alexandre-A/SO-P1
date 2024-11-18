@@ -237,4 +237,5 @@ done
 if [[ $firstRun -eq 0 ]] ; then
     rm /tmp/tmp.WORKFOLDER.*
     rm /tmp/tmp.BACKUPFOLDER.*
+    rm /tmp/tmp.BKPFINE.*
 fi
