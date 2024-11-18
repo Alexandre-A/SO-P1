@@ -28,8 +28,6 @@ if [[ "$WORKFOLDER" == "$BACKUPFOLDER" ]]; then
 	exit 1
 fi
 
-WORKFOLDER=$(realpath "$WORKFOLDER")
-BACKUPFOLDER=$(realpath "$BACKUPFOLDER")
 
 for file in "$BACKUPFOLDER"/*; do
 	if [[ -f "$file" ]]; then

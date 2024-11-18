@@ -96,6 +96,7 @@ WORKFOLDER="${!OPTIND}"
 SECDIR=$(($OPTIND + 1))
 BACKUPFOLDER="${!SECDIR}"
 
+
 if [[ "$WORKFOLDER" == "$BACKUPFOLDER" ]]; then
     echo "As diretorias escolhidas são iguais, escolha diretorias diferentes"
     exit 1
@@ -107,11 +108,7 @@ if [[ $output -eq 2 ]]; then
     exit 1
 fi
 
-comp="$(realpath "BACKUPFOLDER")" # variável de comparação
-if [[ "$(dirname "BACKUPFOLDER")" == "." && $optc -eq 0 ]] ; then
-    comp="."
-fi
-if [[ "$(realpath "$comp")" == "$(realpath "$WORKFOLDER")"* ]]; then
+if [[ "$(realpath "$BACKUPFOLDER")" == "$(realpath "$WORKFOLDER")"* ]]; then
     echo "A diretoria escolhida como destino de backup está contida na diretoria de trabalho"
     echo "Escolha uma diretoria diferente"
     exit 1
@@ -149,8 +146,7 @@ for file in "$WORKFOLDER"/*; do
     if [[ $optb -eq 0 ]]; then
         for ignfile in "${IGNORE[@]}"; do
             ignfile="$(echo ${ignfile} | tr -d '\n')"
-# BRUH O -B NÃO FUNFA NAAAAO
-            if [[ "${ignfile##*/}" == "${file##*/}" ]]; then
+            if [[ "$ignfile" == "$file" ]]; then
                 ignored=0
                 break
             fi

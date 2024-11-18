@@ -1,0 +1,4 @@
+cp -a src/output.txt backup_test/output.txt
+cp -a src/start.sh backup_test/start.sh
+While backuping src: 0 Errors; 0 Warnings; 1 Updated; 1 Copied (8304B); 0 Deleted (0B)
+While backuping src/aaa: 0 Errors; 0 Warnings; 0 Updated; 0 Copied (0B); 0 Deleted (0B)
