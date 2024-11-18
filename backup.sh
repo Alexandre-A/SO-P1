@@ -89,15 +89,6 @@ if [[ $output -eq 2 ]]; then
     exit 1
 fi
 
-comp="$(realpath "BACKUPFOLDER")" # variável de comparação
-if [[ "$(dirname "BACKUPFOLDER")" == "." && $optc -eq 0 ]] ; then
-    comp="."
-fi
-if [[ "$(realpath "$comp")" == "$(realpath "$WORKFOLDER")"* ]]; then
-    echo "A diretoria escolhida como destino de backup está contida na diretoria de trabalho" 1>&2
-    echo "Escolha uma diretoria diferente" 1>&2
-    exit 1
-fi
 
 if ! [ -d "$BACKUPFOLDER" ]; then
     if [ -f "$BACKUPFOLDER" ]; then
@@ -115,6 +106,29 @@ if ! [ -d "$BACKUPFOLDER" ]; then
     fi
 fi
 
+WORKFOLDER=$(realpath "$WORKFOLDER")
+if [[ $? -ne 0 ]]; then
+    exit 1
+fi
+if [[ $optr -eq 0 ]]; then
+    if ! [[ $newFolder -eq 0 ]]; then
+        BACKUPFOLDER=$(realpath "$BACKUPFOLDER")
+        if [[ $? -ne 0 ]]; then
+            exit 1
+        fi
+    fi
+elif [[ $optc -ne 0 ]]; then
+    BACKUPFOLDER=$(realpath "$BACKUPFOLDER")
+    if [[ $? -ne 0 ]]; then
+        exit 1
+    fi
+fi
+
+if [[ "$(realpath BACKUPFOLDER)" == "$(realpath "$WORKFOLDER")"* ]]; then
+    echo "A diretoria escolhida como destino de backup está contida na diretoria de trabalho" 1>&2
+    echo "Escolha uma diretoria diferente" 1>&2
+    exit 1
+fi
 
 
 if [[ $optb -eq 0 ]]; then
