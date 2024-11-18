@@ -9,6 +9,7 @@ function cmd() {
         mkdir)
             if [[ "$2" == "-p" ]] ; then
                 bdir="$3"
+
                 firstarg="${@:1:2}"
 
                 fakebdir=$(realpath -s -q --relative-to="$(realpath -q "${@: -2:1}")" "${bdir%/*}")
