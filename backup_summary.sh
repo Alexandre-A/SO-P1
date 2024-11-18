@@ -69,25 +69,25 @@ while getopts ${OPTSTRING} opt; do
         REGEX=${OPTARG}
         ;;
     :)
-        echo "Option -${OPTARG} requires an argument."
+        echo "Option -${OPTARG} requires an argument." 1>&2
         exit 1
         ;;
     ?)
-        echo "Invalid option: -${OPTARG}."
+        echo "Invalid option: -${OPTARG}." 1>&2
         exit 1
         ;;
     esac
 done
 
 if [[ $(($# - $OPTIND + 1)) -ne 2 ]]; then #+1 porque o getopts indica o index seguinte do ultimo getopts flag
-    echo "Não foram passados 2 argumentos como diretoria"
+    echo "Não foram passados 2 argumentos como diretoria" 1>&2
     exit 1
 fi
 
 # echo ${!OPTIND} #indirect expansion
 
 if ! [ -d "${!OPTIND}" ]; then
-    echo "Diretoria de trabalho não existe"
+    echo "Diretoria de trabalho não existe" 1>&2
     exit 1
 fi
 
@@ -97,7 +97,7 @@ SECDIR=$(($OPTIND + 1))
 BACKUPFOLDER="${!SECDIR}"
 
 if [[ "$WORKFOLDER" == "$BACKUPFOLDER" ]]; then
-    echo "As diretorias escolhidas são iguais, escolha diretorias diferentes"
+    echo "As diretorias escolhidas são iguais, escolha diretorias diferentes" 1>&2
     exit 1
 fi
 
@@ -112,14 +112,14 @@ if [[ "$(dirname "BACKUPFOLDER")" == "." && $optc -eq 0 ]] ; then
     comp="."
 fi
 if [[ "$(realpath "$comp")" == "$(realpath "$WORKFOLDER")"* ]]; then
-    echo "A diretoria escolhida como destino de backup está contida na diretoria de trabalho"
-    echo "Escolha uma diretoria diferente"
+    echo "A diretoria escolhida como destino de backup está contida na diretoria de trabalho" 1>&2
+    echo "Escolha uma diretoria diferente" 1>&2
     exit 1
 fi
 
 if ! [ -d "$BACKUPFOLDER" ]; then
     if [ -f "$BACKUPFOLDER" ]; then
-        echo "» Impossível criar a diretoria de backup $BACKUPFOLDER, já existe um ficheiro com o mesmo nome «"
+        echo "Impossível criar a diretoria de backup $BACKUPFOLDER, já existe um ficheiro com o mesmo nome" 1>&2
         exit 1
     else
         if [[ $optr -eq 0 ]]; then
@@ -176,7 +176,6 @@ for file in "$WORKFOLDER"/*; do
 
             cmd cp -a "$file" "${BACKUPFOLDER}/${file##*/}" $optc
             if [[ $? -eq 0 ]]; then               #Se não houve erro a copiar
-                if [[ $optc -ne 0 ]]; then        #Se não foi ativada a flag -c
                     if [[ $iscopia -eq 0 ]]; then #Se foi agora copiado (new file)
                         summaryArray[3]=$((summaryArray[3] + 1))
                         tamanho=$(ls -l "$file" | awk '{print $5}')
@@ -185,7 +184,6 @@ for file in "$WORKFOLDER"/*; do
                     else
                         summaryArray[2]=$((summaryArray[2] + 1))
                     fi
-                fi
             else
                 summaryArray[0]=$((summaryArray[0] + 1))
             fi
@@ -212,11 +210,9 @@ for file in "$BACKUPFOLDER"/*; do
     if [[ -f "$file" ]]; then
         #echo "$file"
         if ! [ -f "${WORKFOLDER}/${file##*/}" ]; then
-            if [[ $optc -ne 0 ]]; then
-                tamanho=$(ls -l "$file" | awk '{print $5}')
-                summaryArray[6]=$((summaryArray[6] + tamanho))
-                summaryArray[5]=$((summaryArray[5] + 1))
-            fi
+            tamanho=$(ls -l "$file" | awk '{print $5}')
+            summaryArray[6]=$((summaryArray[6] + tamanho))
+            summaryArray[5]=$((summaryArray[5] + 1))
             cmd rm "$file" $optc
             if ! [[ $? -eq 0 ]]; then #Se não houve erro a copiar
                 summaryArray[0]=$((summaryArray[0] + 1))
