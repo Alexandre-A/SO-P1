@@ -7,15 +7,15 @@ function recursiveDeletion(){
     local dir="$1"
     local optc="$2"
     if ! [ -n "$(find "$dir" -mindepth 1 -maxdepth 1 -print -quit)" ]; then #Se a diretoria estiver vazia
-        cmd rmdir "$1" $optc "$3" "$4"
+        cmd rmdir "$1" $optc 
     else
         for file in "$dir"/*; do
             if [[ -f "$file" ]];then
-                cmd rm "$file" $optc "$3" "$4"
+                cmd rm "$file" $optc
             elif [[ -d "$file" ]];then
-                recursiveDeletion "$file" $optc "$3" "$4"
+                recursiveDeletion "$file" $optc
             fi
         done
        fi        
-    cmd rmdir "$1" $optc "$3" "$4"
+    cmd rmdir "$1" $optc  
 }
