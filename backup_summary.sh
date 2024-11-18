@@ -142,6 +142,24 @@ if ! [ -d "$BACKUPFOLDER" ]; then
 fi
 
 
+WORKFOLDER=$(realpath "$WORKFOLDER")
+if [[ $? -ne 0 ]]; then
+    exit 1
+fi
+if [[ $optr -eq 0 ]]; then
+    if ! [[ $newFolder -eq 0 ]]; then
+        BACKUPFOLDER=$(realpath "$BACKUPFOLDER")
+        if [[ $? -ne 0 ]]; then
+            exit 1
+        fi
+    fi
+elif [[ $optc -ne 0 ]]; then
+    BACKUPFOLDER=$(realpath "$BACKUPFOLDER")
+    if [[ $? -ne 0 ]]; then
+        exit 1
+    fi
+fi
+
 if [[ $optb -eq 0 ]]; then
     mapfile IGNORE <"$TFILE"
 fi
