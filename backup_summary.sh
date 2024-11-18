@@ -18,25 +18,25 @@ function recursiveDeletion() {
     echo
     if ! [ -n "$(find "$dir" -mindepth 1 -maxdepth 1 -print -quit)" ]; then #Se a diretoria estiver vazia
         wasEmpty=0
-        cmd rmdir "$1" $optc
+        cmd rmdir "$1" $optc "$workCache" "$bkpCache"
         if ! [[ $? -eq 0 ]]; then #Se houve erro a copiar
             erros=$((erros + 1))
         fi 
     else
         for file in "$dir"/*; do
             if [[ -f "$file" ]]; then
-                cmd rm "$file" $optc
+                cmd rm "$file" $optc "$4" "$5"
                 if ! [[ $? -eq 0 ]]; then #Se houve erro a copiar
                     erros=$((erros + 1))
                 fi
             elif [[ -d "$file" ]]; then
-                recursiveDeletion "$file" $optc $erros
+                recursiveDeletion "$file" $optc $erros "$4" "$5"
                 erros=$?
             fi
         done
     fi
     if [[ $wasEmpty -eq 1 ]]; then
-        cmd rmdir "$1" $optc
+        cmd rmdir "$1" $optc "$4" "$5"
         if ! [[ $? -eq 0 ]]; then #Se houve erro a copiar
             erros=$((erros + 1))
         fi
@@ -53,6 +53,8 @@ declare -a summaryArray=(0 0 0 0 0 0 0)
 OPTSTRING=":cb:r:"
 showsummary=1
 
+workCache=$(cat /tmp/tmp.WORKFOLDER.* 2> /dev/null)
+bkpCache=$(cat /tmp/tmp.BACKUPFOLDER.* 2> /dev/null)
 
 #-----------------------------------------------------------------------#
 while getopts ${OPTSTRING} opt; do
@@ -107,14 +109,19 @@ if [[ $output -eq 2 ]]; then
     exit 1
 fi
 
-comp="$(realpath "BACKUPFOLDER")" # variável de comparação
-if [[ "$(dirname "BACKUPFOLDER")" == "." && $optc -eq 0 ]] ; then
+comp="$(realpath "$BACKUPFOLDER")" # variável de comparação
+if [[ "$(dirname "$BACKUPFOLDER")" == "." && $optc -eq 0 ]] ; then
     comp="."
 fi
 if [[ "$(realpath "$comp")" == "$(realpath "$WORKFOLDER")"* ]]; then
     echo "A diretoria escolhida como destino de backup está contida na diretoria de trabalho" 1>&2
     echo "Escolha uma diretoria diferente" 1>&2
     exit 1
+fi
+
+if [[ "$workCache" == "" || "$bkpCache" == "" ]] ; then
+    workCache="$WORKFOLDER"
+    bkpCache="$BACKUPFOLDER"
 fi
 
 if ! [ -d "$BACKUPFOLDER" ]; then
@@ -124,10 +131,10 @@ if ! [ -d "$BACKUPFOLDER" ]; then
     else
         if [[ $optr -eq 0 ]]; then
             if ! [[ -z $(ls -A "$WORKFOLDER") ]]; then
-                checkSubRegex "$WORKFOLDER" "$BACKUPFOLDER" $optc $REGEX
+                checkSubRegex "$WORKFOLDER" "$BACKUPFOLDER" $optc "$REGEX" "$workCache" "$bkpCache"
             fi
         else
-            cmd mkdir "$BACKUPFOLDER" $optc
+            cmd mkdir "$BACKUPFOLDER" $optc "$workCache" "$bkpCache"
             if ! [[ $? -eq 0 ]]; then #Se houve erro a copiar
                 summaryArray[0]=$((summaryArray[0] + 1))
             fi
@@ -136,6 +143,41 @@ if ! [ -d "$BACKUPFOLDER" ]; then
         newFolder=0
     fi
 
+fi
+
+WORKFOLDER=$(realpath "$WORKFOLDER")
+if [[ $? -ne 0 ]]; then
+    exit 1
+fi
+if [[ $optr -eq 0 ]]; then
+    if ! [[ $newFolder -eq 0 ]]; then
+        BACKUPFOLDER=$(realpath "$BACKUPFOLDER")
+        if [[ $? -ne 0 ]]; then
+            exit 1
+        fi
+    fi
+elif [[ $optc -ne 0 ]]; then
+    BACKUPFOLDER=$(realpath "$BACKUPFOLDER")
+    if [[ $? -ne 0 ]]; then
+        exit 1
+    fi
+fi
+
+if [[ -z $(ls /tmp/tmp.BACKUPFOLDER.* 2> /dev/null) && -z $(ls /tmp/tmp.WORKFOLDER.* 2> /dev/null) ]] ; then
+    firstRun=0
+    mktemp -q -t tmp.WORKFOLDER.XXXXXXXXXX > /dev/null
+
+    if [[ $? -eq 0 ]] ; then
+        mktemp -q -t tmp.BACKUPFOLDER.XXXXXXXXXX > /dev/null
+        #echo made temps
+
+        if [[ $? -eq 0 ]] ; then
+            workCache="$WORKFOLDER"
+            bkpCache="$BACKUPFOLDER"
+            echo "$workCache" > /tmp/tmp.WORKFOLDER.*
+            echo "$bkpCache" > /tmp/tmp.BACKUPFOLDER.*
+        fi
+    fi
 fi
 
 
@@ -173,7 +215,7 @@ for file in "$WORKFOLDER"/*; do
                 iscopia=0
             fi
 
-            cmd cp -a "$file" "${BACKUPFOLDER}/${file##*/}" $optc
+            cmd cp -a "$file" "${BACKUPFOLDER}/${file##*/}" $optc "$workCache" "$bkpCache"
             if [[ $? -eq 0 ]]; then               #Se não houve erro a copiar
                     if [[ $iscopia -eq 0 ]]; then #Se foi agora copiado (new file)
                         summaryArray[3]=$((summaryArray[3] + 1))
@@ -211,7 +253,7 @@ for file in "$BACKUPFOLDER"/*; do
             tamanho=$(ls -l "$file" | awk '{print $5}')
             summaryArray[6]=$((summaryArray[6] + tamanho))
             summaryArray[5]=$((summaryArray[5] + 1))
-            cmd rm "$file" $optc
+            cmd rm "$file" $optc "$workCache" "$bkpCache"
             if ! [[ $? -eq 0 ]]; then #Se não houve erro a copiar
                 summaryArray[0]=$((summaryArray[0] + 1))
             fi
@@ -228,6 +270,6 @@ done
 
 # if backupfolder is empty, rmdir the directory
 if [[ $showsummary -eq 0 ]]; then # apenas dá display se cumprir o regex, no caso do -r estar ativo, ou não usar o -r
-    echo "While backuping $WORKFOLDER: ${summaryArray[0]} Errors; ${summaryArray[1]} Warnings; ${summaryArray[2]} Updated; ${summaryArray[3]} Copied (${summaryArray[4]}B); ${summaryArray[5]} Deleted (${summaryArray[6]}B)"
+    echo "While backuping $workCache: ${summaryArray[0]} Errors; ${summaryArray[1]} Warnings; ${summaryArray[2]} Updated; ${summaryArray[3]} Copied (${summaryArray[4]}B); ${summaryArray[5]} Deleted (${summaryArray[6]}B)"
     echo
 fi

@@ -31,7 +31,7 @@ function recursiveDeletion() {
     else
         for file in "$dir"/*; do
             if [[ -f "$file" ]]; then
-                cmd rm "$file" $optc "$workCache" "$bkpCache"
+                cmd rm "$file" $optc "$3" "$4"
             elif [[ -d "$file" ]]; then
                 recursiveDeletion "$file" $optc "$3" "$4"
             fi
@@ -94,8 +94,8 @@ if [[ $output -eq 2 ]]; then
     exit 1
 fi
 
-comp="$(realpath "BACKUPFOLDER")" # variável de comparação
-if [[ "$(dirname "BACKUPFOLDER")" == "." && $optc -eq 0 ]] ; then
+comp="$(realpath "$BACKUPFOLDER")" # variável de comparação
+if [[ "$(dirname "$BACKUPFOLDER")" == "." && $optc -eq 0 ]] ; then
     comp="."
 fi
 if [[ "$(realpath "$comp")" == "$(realpath "$WORKFOLDER")"* ]]; then
@@ -152,13 +152,14 @@ if [[ -z $(ls /tmp/tmp.BACKUPFOLDER.* 2> /dev/null) && -z $(ls /tmp/tmp.WORKFOLD
         #echo made temps
 
         if [[ $? -eq 0 ]] ; then
-            workCache="${WORKFOLDER##*/}"
-            bkpCache="${BACKUPFOLDER##*/}"
+            workCache="$WORKFOLDER"
+            bkpCache="$BACKUPFOLDER"
             echo "$workCache" > /tmp/tmp.WORKFOLDER.*
             echo "$bkpCache" > /tmp/tmp.BACKUPFOLDER.*
         fi
     fi
 fi
+
 
 if [[ $optb -eq 0 ]]; then
     mapfile IGNORE <"$TFILE"
