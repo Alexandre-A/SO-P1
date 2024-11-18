@@ -149,7 +149,6 @@ for file in "$WORKFOLDER"/*; do
     if [[ $optb -eq 0 ]]; then
         for ignfile in "${IGNORE[@]}"; do
             ignfile="$(echo ${ignfile} | tr -d '\n')"
-# BRUH O -B NÃO FUNFA NAAAAO
             if [[ "${ignfile##*/}" == "${file##*/}" ]]; then
                 ignored=0
                 break
@@ -164,7 +163,7 @@ for file in "$WORKFOLDER"/*; do
                 mod_time2=$(stat -c %Y "${BACKUPFOLDER}/${file##*/}")
 
                 if [[ $mod_time2 -gt $mod_time1 ]]; then
-                    echo "WARNING: backup entry ${BACKUPFOLDER}/${file##*/} is newer than ${WORKFOLDER}/${file##*/}; Should not happen"
+                    echo "WARNING: backup entry ${BACKUPFOLDER}/${file##*/} is newer than ${WORKFOLDER}/${file##*/}; Should not happen" 1>&2
                     summaryArray[1]=$((summaryArray[1] + 1))
                     continue
                 elif [[ $mod_time1 -eq $mod_time2 ]]; then
@@ -208,7 +207,6 @@ done
 #diff -q "$WORKFOLDER" "$BACKUPFOLDER" | grep "Only"
 for file in "$BACKUPFOLDER"/*; do
     if [[ -f "$file" ]]; then
-        #echo "$file"
         if ! [ -f "${WORKFOLDER}/${file##*/}" ]; then
             tamanho=$(ls -l "$file" | awk '{print $5}')
             summaryArray[6]=$((summaryArray[6] + tamanho))
