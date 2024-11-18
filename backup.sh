@@ -20,6 +20,16 @@ bkpCache=$(cat /tmp/tmp.BACKUPFOLDER.* 2> /dev/null)
 
 #-----------------------------------------------------------------------#
 
+function abandon() {
+    rm /tmp/tmp.BACKUPFOLDER.* 2> /dev/null
+    rm /tmp/tmp.WORKFOLDER.* 2> /dev/null
+    rm /tmp/tmp.BKPFINE.* 2> /dev/null
+    exit $1
+}
+
+# We MUST avoid the temporary files remaining in the directory!
+trap abandon INT
+
 function recursiveDeletion() {
     # $1 -> directory; $2 -> optc
     local dir="$1"
@@ -57,25 +67,25 @@ while getopts ${OPTSTRING} opt; do
         ;;
     :)
         echo "Option -${OPTARG} requires an argument." 1>&2
-        exit 1
+        abandon 1
         ;;
     ?)
         echo "Invalid option: -${OPTARG}." 1>&2
-        exit 1
+        abandon 1
         ;;
     esac
 done
 
 if [[ $(($# - $OPTIND + 1)) -ne 2 ]]; then #+1 porque o getopts indica o index seguinte do ultimo getopts flag
     echo "Não foram passados 2 argumentos como diretoria" 1>&2
-    exit 1
+    abandon 1
 fi
 
 # echo ${!OPTIND} #indirect expansion
 
 if ! [ -d "${!OPTIND}" ]; then
     echo "Diretoria de trabalho não existe" 1>&2
-    exit 1
+    abandon 1
 fi
 
 WORKFOLDER="${!OPTIND}"
@@ -85,23 +95,27 @@ BACKUPFOLDER="${!SECDIR}"
 
 if [[ "$WORKFOLDER" == "$BACKUPFOLDER" ]]; then
     echo "As diretorias escolhidas são iguais, escolha diretorias diferentes" 1>&2
-    exit 1
+    abandon 1
 fi
 
 probeArgs "$WORKFOLDER" "$BACKUPFOLDER" $optr $optc $optb "$TFILE" "$REGEX"
 output=$?
 if [[ $output -eq 2 ]]; then
-    exit 1
+    abandon 1
 fi
 
-comp="$(realpath "$BACKUPFOLDER")" # variável de comparação
-if [[ "$(dirname "$BACKUPFOLDER")" == "." && $optc -eq 0 ]] ; then
-    comp="."
-fi
-if [[ "$(realpath "$comp")" == "$(realpath "$WORKFOLDER")"* ]]; then
-    echo "A diretoria escolhida como destino de backup está contida na diretoria de trabalho" 1>&2
-    echo "Escolha uma diretoria diferente" 1>&2
-    exit 1
+if [[ -z $(ls /tmp/tmp.BKPFINE.* 2> /dev/null) ]] ; then
+    comp="$(realpath "$BACKUPFOLDER")" # variável de comparação
+    if [[ "$(dirname "$BACKUPFOLDER")" == "." && $optc -eq 0 ]] ; then
+        comp="."
+    fi
+    if [[ "$(realpath "$comp")" == "$(realpath "$WORKFOLDER")"* ]]; then
+        echo "A diretoria escolhida como destino de backup está contida na diretoria de trabalho" 1>&2
+        echo "Escolha uma diretoria diferente" 1>&2
+        abandon 1
+    elif [[ -z $(ls /tmp/tmp.BACKUPFOLDER.* 2> /dev/null) ]] ; then
+        mktemp -q -t tmp.BKPFINE.XXXXXXXXXX > /dev/null
+    fi
 fi
 
 if [[ "$workCache" == "" || "$bkpCache" == "" ]] ; then
@@ -112,7 +126,7 @@ fi
 if ! [ -d "$BACKUPFOLDER" ]; then
     if [ -f "$BACKUPFOLDER" ]; then
         echo "Impossível criar a diretoria de backup $BACKUPFOLDER, já existe um ficheiro com o mesmo nome" 1>&2
-        exit 1
+        abandon 1
     else
         if [[ $optr -eq 0 ]]; then
             if ! [[ -z $(ls -A "$WORKFOLDER") ]]; then
@@ -127,19 +141,19 @@ fi
 
 WORKFOLDER=$(realpath "$WORKFOLDER")
 if [[ $? -ne 0 ]]; then
-    exit 1
+    abandon 1
 fi
 if [[ $optr -eq 0 ]]; then
     if ! [[ $newFolder -eq 0 ]]; then
         BACKUPFOLDER=$(realpath "$BACKUPFOLDER")
         if [[ $? -ne 0 ]]; then
-            exit 1
+            abandon 1
         fi
     fi
 elif [[ $optc -ne 0 ]]; then
     BACKUPFOLDER=$(realpath "$BACKUPFOLDER")
     if [[ $? -ne 0 ]]; then
-        exit 1
+        abandon 1
     fi
 fi
 
